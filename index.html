@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lithophane Print Studio</title>
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Cropper.js for client zoom/crop -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+</head>
+<body>
+  <div class="dashboard-grid">
+    <!-- Panel 1: Upload & Shape Configuration -->
+    <div class="panel upload-style">
+      <div class="panel-header">1. Upload & Shape</div>
+      
+      <!-- Standard File Upload Input -->
+      <input type="file" id="imageInput" accept="image/*" style="display: none;">
+      <!-- Mobile Direct Camera Capture Input -->
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
+
+      <!-- Dropzone -->
+      <div class="card upload-card" id="uploadZone">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.5">
+          <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9m-4-4 4-4 4 4"/>
+        </svg>
+        <p id="uploadText">
+          <strong>CHOOSE A PHOTO</strong><br>
+          <span>Click to browse or drag & drop</span>
+        </p>
+      </div>
+
+      <!-- Dedicated Camera Capture Option (Ideal for Mobile) -->
+      <button type="button" class="btn-camera" id="btnCamera">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        <span>Take Photo with Camera</span>
+      </button>
+
+      <!-- Shape Selection -->
+      <div class="card selector-card">
+        <div class="card-header">SELECT PRINT SHAPE</div>
+        <div class="option-grid" id="shapeSelector">
+          <button type="button" class="opt-btn active" data-shape="square" data-ratio="1" data-desc="4 x 4 in (101.6 x 101.6 mm)">
+            <span class="shape-icon icon-square"></span>
+            <strong>Square</strong>
+            <small>3" × 3"</small>
+          </button>
+          <button type="button" class="opt-btn" data-shape="portrait" data-ratio="0.666667" data-desc="3 x 4 in (76.2 x 101.6 mm)">
+            <span class="shape-icon icon-portrait"></span>
+            <strong>Portrait</strong>
+            <small>3" × 4"</small>
+          </button>
+          <button type="button" class="opt-btn" data-shape="landscape" data-ratio="1.5" data-desc="4 x 3 in (101.6 x 76.2 mm)">
+            <span class="shape-icon icon-landscape"></span>
+            <strong>Landscape</strong>
+            <small>4" × 3"</small>
+          </button>
+          <button type="button" class="opt-btn" data-shape="circle" data-ratio="1" data-desc="3 in Diameter (76.2 mm)">
+            <span class="shape-icon icon-circle"></span>
+            <strong>Circle</strong>
+            <small>3" Round</small>
+          </button>
+        </div>
+      </div>
+
+      <!-- Integrated Hook Selection -->
+      <div class="card selector-card">
+        <div class="card-header">INTEGRATED HANGING HOOKS</div>
+        <div class="option-grid hook-options" id="hookSelector">
+          <button type="button" class="opt-btn active" data-hooks="1" id="hookOpt1">
+            <span class="hook-preview-icon single">●</span>
+            <strong>1 Hook</strong>
+            <small>Centered Top</small>
+          </button>
+          <button type="button" class="opt-btn" data-hooks="2" id="hookOpt2">
+            <span class="hook-preview-icon double">●&nbsp;&nbsp;&nbsp;●</span>
+            <strong>2 Hooks</strong>
+            <small>Balanced Left/Right</small>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 2: Interactive Crop & Visual Framing Preview -->
+    <div class="panel preview">
+      <div class="panel-header">
+        <span>2. Position & Preview</span>
+        <div class="header-tools">
+          <!-- Crop / Wheel Lock Toggle -->
+          <button type="button" class="btn-lock" id="btnLockCrop" title="Lock image position so scrolling doesn't adjust the zoom">
+            <span class="lock-icon" id="lockIcon">🔓</span>
+            <span id="lockText">Unlocked</span>
+          </button>
+          <span class="status-badge" id="statusBadge">Awaiting Photo</span>
+        </div>
+      </div>
+
+      <!-- Low-Resolution Warning Banner -->
+      <div class="res-warning" id="resWarning" style="display: none;">
+        <span class="warning-icon">⚠️</span>
+        <div>
+          <strong>Photo Resolution Warning:</strong>
+          <span>This image crop is under 150 DPI. The final print may appear soft or slightly pixelated.</span>
+        </div>
+      </div>
+
+      <!-- Preview Workspace -->
+      <div class="card canvas-card" id="workspace">
+        <div class="cropper-wrapper" id="cropperWrapper">
+          <img id="cropperImage" alt="Cropper Source" src="">
+        </div>
+
+        <!-- Visual 3.0mm Border & Integrated Hook Overlays -->
+        <div class="border-overlay-guide" id="borderGuide">
+          <div class="hook-guide hook-left" id="hookLeftGuide"></div>
+          <div class="hook-guide hook-center" id="hookCenterGuide"></div>
+          <div class="hook-guide hook-right" id="hookRightGuide"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 3: Fine-Tuning & Submit -->
+    <div class="panel controls">
+      <div class="panel-header">3. Fine-Tune & Order</div>
+      
+      <!-- Contrast & Brightness Adjustments -->
+      <div class="card config-card">
+        <div class="card-header">IMAGE TONE CONTROLS</div>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Contrast:</span>
+            <span id="contrastVal">0%</span>
+          </div>
+          <input type="range" id="contrastSlider" min="-50" max="50" value="0">
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Brightness:</span>
+            <span id="brightnessVal">0%</span>
+          </div>
+          <input type="range" id="brightnessSlider" min="-50" max="50" value="0">
+        </div>
+
+        <button type="button" class="btn-secondary" id="btnResetAdjust">Reset Image Tone</button>
+
+        <!-- Lithophane Tone Explanation -->
+        <div class="tone-explainer">
+          <strong>Why Adjust Image Tone?</strong>
+          <p>Lithophanes create images entirely through <em>resin thickness</em>—dark shadows print thick and opaque, while bright whites print thin and translucent to let light pass through.</p>
+          <ul>
+            <li><strong>Boosting Contrast (+):</strong> Deepens shadows and sharpens highlights, preventing the 3D print from looking flat or washed out when backlit.</li>
+            <li><strong>Adjusting Brightness:</strong> Raises detail in dark underexposed photos or prevents highlights from blowing out to solid white.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Print Specifications Summary -->
+      <div class="card specs-card">
+        <div class="card-header">PRINT SPECIFICATIONS</div>
+        <ul class="specs-list">
+          <li><strong>Border Margin:</strong> 3.0 mm solid outer rim</li>
+          <li><strong>Border Depth:</strong> 3.2 mm rigid frame</li>
+          <li><strong>Hanging Eyelet:</strong> Solid tab with 4.0 mm hole</li>
+          <li><strong>Print Technology:</strong> High-res MSLA White Resin</li>
+        </ul>
+      </div>
+
+      <!-- Customer Details & Submission -->
+      <div class="card submit-card">
+        <input type="text" id="custName" placeholder="Customer Name" required>
+        <input type="email" id="custEmail" placeholder="Email Address" required>
+        <textarea id="notes" placeholder="Special requests or placement notes..." rows="2"></textarea>
+        <button class="btn-submit" id="btnSubmit">Approve & Submit for Printing</button>
+        <div class="export-success-box" id="exportSuccess" style="display: none;"></div>
+        <p class="status-msg" id="statusMsg"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
